@@ -17,12 +17,17 @@ load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("gemini_api")
 genai.configure(api_key=api_key)
 
-inngest_client = inngest.Inngest(
-    app_id="rag_app",
-    logger=logging.getLogger("uvicorn"),
-    is_production=False,
-    serializer=inngest.PydanticSerializer()
-)
+def get_inngest_client() -> inngest.Inngest:
+    is_production = os.getenv("INNGEST_PRODUCTION", "false").strip().lower() in {"1", "true", "yes", "on"}
+    return inngest.Inngest(
+        app_id=os.getenv("INNGEST_APP_ID", "rag_app"),
+        logger=logging.getLogger("uvicorn"),
+        is_production=is_production,
+        serializer=inngest.PydanticSerializer(),
+    )
+
+
+inngest_client = get_inngest_client()
 
 @inngest_client.create_function(
     fn_id="RAG: Ingest PDF",
